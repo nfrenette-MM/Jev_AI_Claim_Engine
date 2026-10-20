@@ -444,6 +444,22 @@ class DatabaseAdapter:
             ))
         return outcomes
 
+    def clear_all_claims(self) -> Dict[str, int]:
+        """Clears all claims, remittances, and adjudications while preserving NCCI reference edits."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM claims_837")
+        claims_count = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT COUNT(*) FROM adjudications")
+        adj_count = cursor.fetchone()[0] or 0
+        
+        cursor.execute("DELETE FROM claims_837")
+        cursor.execute("DELETE FROM remittances_835")
+        cursor.execute("DELETE FROM adjudications")
+        conn.commit()
+        conn.close()
+        return {"deleted_claims": claims_count, "deleted_adjudications": adj_count}
+
     def get_metrics(self) -> Dict[str, Any]:
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -480,3 +496,4 @@ class DatabaseAdapter:
         }
 
 db = DatabaseAdapter()
+

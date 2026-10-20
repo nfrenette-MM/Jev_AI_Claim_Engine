@@ -566,6 +566,115 @@ header.app-header {
   box-shadow: var(--shadow-sm);
 }
 
+.demo-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.btn-demo-reload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cyan-light);
+  color: var(--cyan-primary);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-demo-reload:hover {
+  background: #bae6fd;
+  border-color: var(--cyan-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.18);
+}
+
+.btn-demo-reload:active {
+  transform: scale(0.98);
+}
+
+.btn-demo-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: var(--rose-danger);
+  border: 1px solid rgba(225, 29, 72, 0.35);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-demo-clear:hover {
+  background: var(--rose-light);
+  border-color: var(--rose-danger);
+  color: #be123c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(225, 29, 72, 0.18);
+}
+
+.btn-demo-clear:active {
+  transform: scale(0.98);
+}
+
+/* Empty Queue State */
+.empty-queue-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-queue-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--cyan-light);
+  border: 1px solid rgba(2, 132, 199, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.empty-queue-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.empty-queue-desc {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  max-width: 460px;
+  line-height: 1.5;
+}
+
+.empty-queue-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 /* ==========================================================================
    Claims Table (Crisp Light Theme)
    ========================================================================== */

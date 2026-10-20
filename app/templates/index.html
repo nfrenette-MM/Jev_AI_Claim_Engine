@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JEV AI Claim Engine | Autonomous Healthcare Claims Remediation</title>
   <meta name="description" content="Autonomous RCM Claims Remediation and NCCI PTP Adjudication Engine powered by TypeSafe Jev AI, Anthropic HCLS MCPs, and Google Gemini.">
-  <link rel="stylesheet" href="/static/css/style.css?v=2.1.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.1.2">
 </head>
 <body>
   <div class="container">
@@ -34,6 +34,9 @@
         </button>
         <button class="btn-primary" id="batchRemediateBtn">
           ⚡ Remediate All Pending
+        </button>
+        <button class="btn-demo-clear" id="headerClearQueueBtn" title="Clear all claims from queue for demonstration">
+          🗑️ Clear Queue
         </button>
       </div>
     </header>
@@ -147,6 +150,14 @@
           <button class="filter-btn" data-filter="AUTO_REMEDIATED">Auto-Remediated</button>
           <button class="filter-btn" data-filter="HITL_REVIEW">HITL Review</button>
           <button class="filter-btn" data-filter="WRITTEN_OFF">Written Off</button>
+        </div>
+        <div class="demo-actions-group">
+          <button class="btn-demo-reload" id="reloadDemoBtn" title="Reload clean demo claims in PENDING status for live demonstration">
+            🔄 Reload Demo Claims
+          </button>
+          <button class="btn-demo-clear" id="clearQueueBtn" title="Clear all claims from the queue for demonstration">
+            🗑️ Clear Queue
+          </button>
         </div>
       </div>
 
@@ -641,9 +652,43 @@
     </div>
   </div>
 
+  <!-- Clear Claims Confirmation Modal -->
+  <div class="modal-overlay" id="clearConfirmModal" role="dialog" aria-modal="true" aria-labelledby="clearModalTitle">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title" id="clearModalTitle">
+          <span style="color: var(--rose-danger); margin-right: 8px;">🗑️</span>
+          <span>Clear Claims Queue</span>
+        </div>
+        <button class="modal-close-btn" id="clearConfirmModalCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--rose-light); color: var(--rose-danger); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;">
+            ⚠️
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 1rem; color: var(--text-main); margin-bottom: 6px;">
+              Reset Queue for Demonstration?
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+              This will remove all active claims, remittances, and adjudications from the engine. NCCI policy edits remain intact so you can demonstrate live real-time ingestion or demo reload.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn-secondary" id="cancelClearBtn">Cancel</button>
+        <button class="btn-primary" id="confirmClearBtn" style="background: linear-gradient(135deg, #e11d48, #be123c); border-color: #f43f5e; box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3);">
+          Yes, Clear All Claims
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="/static/js/app.js?v=2.1.0"></script>
+  <script src="/static/js/app.js?v=2.1.2"></script>
 </body>
 </html>

@@ -67,6 +67,32 @@ async def get_claims():
         })
     return results
 
+@app.post("/api/claims/clear")
+async def clear_claims_queue():
+    """Clears all claims, remittances, and adjudications from the queue for fresh live demonstration."""
+    res = db.clear_all_claims()
+    return {
+        "status": "success",
+        "message": f"Claim queue cleared. Removed {res['deleted_claims']} claims and {res['deleted_adjudications']} adjudications.",
+        "deleted_claims": res["deleted_claims"],
+        "deleted_adjudications": res["deleted_adjudications"],
+        "metrics": db.get_metrics()
+    }
+
+@app.post("/api/claims/reload-demo")
+async def reload_demo_claims():
+    """Clears the queue and seeds the fresh demo claims in PENDING status for real-time demonstration."""
+    from data.seed_data import seed_database
+    db.clear_all_claims()
+    seed_database()
+    claims = db.get_all_claims()
+    return {
+        "status": "success",
+        "message": f"Successfully reloaded {len(claims)} demo claims in PENDING state.",
+        "claims_count": len(claims),
+        "metrics": db.get_metrics()
+    }
+
 @app.get("/api/claims/{claim_id}")
 async def get_claim_detail(claim_id: str):
     claim = db.get_claim(claim_id)

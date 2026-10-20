@@ -43,6 +43,40 @@ function setupEventListeners() {
     batchBtn.addEventListener('click', handleBatchRemediate);
   }
 
+  // Clear Claim Queue Modal Bindings (Demo Action)
+  const clearBtn = document.getElementById('clearQueueBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', openClearConfirmModal);
+  }
+  const headerClearBtn = document.getElementById('headerClearQueueBtn');
+  if (headerClearBtn) {
+    headerClearBtn.addEventListener('click', openClearConfirmModal);
+  }
+  const cancelClearBtn = document.getElementById('cancelClearBtn');
+  if (cancelClearBtn) {
+    cancelClearBtn.addEventListener('click', closeClearConfirmModal);
+  }
+  const closeClearModalBtn = document.getElementById('clearConfirmModalCloseBtn');
+  if (closeClearModalBtn) {
+    closeClearModalBtn.addEventListener('click', closeClearConfirmModal);
+  }
+  const confirmClearBtn = document.getElementById('confirmClearBtn');
+  if (confirmClearBtn) {
+    confirmClearBtn.addEventListener('click', executeClearQueue);
+  }
+  const clearModal = document.getElementById('clearConfirmModal');
+  if (clearModal) {
+    clearModal.addEventListener('click', (e) => {
+      if (e.target === clearModal) closeClearConfirmModal();
+    });
+  }
+
+  // Reload Fresh Demo Claims (Demo Action)
+  const reloadBtn = document.getElementById('reloadDemoBtn');
+  if (reloadBtn) {
+    reloadBtn.addEventListener('click', handleReloadDemo);
+  }
+
   // NCCI Sandbox Form
   const sandboxBtn = document.getElementById('sandboxLookupBtn');
   if (sandboxBtn) {
@@ -167,8 +201,44 @@ function renderClaims(claimsList) {
   const tbody = document.getElementById('claimsTableBody');
   if (!tbody) return;
 
+  if (allClaims.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8">
+          <div class="empty-queue-container">
+            <div class="empty-queue-icon">📭</div>
+            <div class="empty-queue-title">Claims Queue Is Empty</div>
+            <div class="empty-queue-desc">
+              The claims queue has been cleared for demonstration. Upload or bulk ingest EDI 837/835 files, or reload fresh demo claims to showcase live real-time autonomous remediation.
+            </div>
+            <div class="empty-queue-actions">
+              <button class="btn-primary" id="emptyStateIngestBtn" style="padding: 8px 16px; font-size: 0.82rem;">
+                📥 Ingest 837 / 835 EDI
+              </button>
+              <button class="btn-demo-reload" id="emptyStateReloadBtn" style="padding: 8px 16px; font-size: 0.82rem;">
+                🔄 Reload Demo Claims
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+    const emptyIngest = document.getElementById('emptyStateIngestBtn');
+    if (emptyIngest) {
+      emptyIngest.addEventListener('click', () => {
+        const uploadModalBtn = document.getElementById('openUploadModalBtn');
+        if (uploadModalBtn) uploadModalBtn.click();
+      });
+    }
+    const emptyReload = document.getElementById('emptyStateReloadBtn');
+    if (emptyReload) {
+      emptyReload.addEventListener('click', handleReloadDemo);
+    }
+    return;
+  }
+
   if (claimsList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-dim); padding: 32px;">No healthcare claims match the selected criteria.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 36px;">No healthcare claims match the filter "<strong>${currentFilter}</strong>" or search query.</td></tr>`;
     return;
   }
 
@@ -329,6 +399,85 @@ async function handleBatchRemediate() {
     if (batchBtn) {
       batchBtn.disabled = false;
       batchBtn.innerHTML = '⚡ Remediate All Pending';
+    }
+  }
+}
+
+function openClearConfirmModal() {
+  const modal = document.getElementById('clearConfirmModal');
+  if (modal) modal.classList.add('open');
+}
+
+function closeClearConfirmModal() {
+  const modal = document.getElementById('clearConfirmModal');
+  if (modal) modal.classList.remove('open');
+}
+
+async function executeClearQueue() {
+  closeClearConfirmModal();
+
+  const clearBtns = [
+    document.getElementById('clearQueueBtn'),
+    document.getElementById('headerClearQueueBtn'),
+    document.getElementById('confirmClearBtn')
+  ].filter(Boolean);
+
+  clearBtns.forEach(b => {
+    b.disabled = true;
+    b.innerHTML = '⏳ Clearing...';
+  });
+
+  try {
+    const res = await fetch('/api/claims/clear', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`Claims queue cleared: ${data.deleted_claims} claims removed.`, 'info');
+      await fetchMetrics();
+      await fetchClaims();
+    } else {
+      showToast(data.detail || 'Failed to clear queue.', 'error');
+    }
+  } catch (err) {
+    console.error('Clear queue error:', err);
+    showToast('Failed to clear queue due to network error.', 'error');
+  } finally {
+    clearBtns.forEach(b => {
+      b.disabled = false;
+      if (b.id === 'confirmClearBtn') {
+        b.innerHTML = 'Yes, Clear All Claims';
+      } else {
+        b.innerHTML = '🗑️ Clear Queue';
+      }
+    });
+  }
+}
+
+async function handleReloadDemo() {
+  const reloadBtn = document.getElementById('reloadDemoBtn');
+  if (reloadBtn) {
+    reloadBtn.disabled = true;
+    reloadBtn.innerHTML = '🔄 Reloading Demo...';
+  }
+
+  showToast('Reloading clean demo claims in PENDING status...', 'info');
+
+  try {
+    const res = await fetch('/api/claims/reload-demo', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`Demo claims reloaded: ${data.claims_count} claims ready in PENDING status.`, 'success');
+      await fetchMetrics();
+      await fetchClaims();
+    } else {
+      showToast(data.detail || 'Failed to reload demo claims.', 'error');
+    }
+  } catch (err) {
+    console.error('Reload demo error:', err);
+    showToast('Failed to reload demo claims due to network error.', 'error');
+  } finally {
+    if (reloadBtn) {
+      reloadBtn.disabled = false;
+      reloadBtn.innerHTML = '🔄 Reload Demo Claims';
     }
   }
 }
