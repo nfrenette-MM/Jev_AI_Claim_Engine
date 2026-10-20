@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JEV AI Claim Engine | Autonomous Healthcare Claims Remediation</title>
+  <meta name="description" content="Autonomous RCM Claims Remediation and NCCI PTP Adjudication Engine powered by TypeSafe Jev AI, Anthropic HCLS MCPs, and Google Gemini.">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Application Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="logo-badge">⚡</div>
+        <div class="title-wrap">
+          <h1>JEV AI CLAIM ENGINE</h1>
+          <p>
+            <span>Autonomous Healthcare Claims Remediation & Multi-MCP Adjudication</span>
+            <span class="version-pill">v2.0 Full MCP Suite</span>
+          </p>
+        </div>
+      </div>
+      <div class="header-status-panel">
+        <div class="system-pill" id="systemStatusPill">
+          <span class="status-dot"></span>
+          <span>icd10 • cms-coverage • local-fhir • databricks • Neon DB Online</span>
+        </div>
+        <button class="btn-secondary" id="openDatabricksModalBtn" title="Inspect Databricks Unity Catalog, Volumes, and Gold Tables">
+          🧱 Databricks Lakehouse
+        </button>
+        <button class="btn-primary" id="openUploadModalBtn" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); border-color: #38bdf8;" title="Upload or Bulk Ingest 837 Claims and 835 Remittances">
+          📥 Ingest 837 / 835 EDI
+        </button>
+        <button class="btn-primary" id="batchRemediateBtn">
+          ⚡ Remediate All Pending
+        </button>
+      </div>
+    </header>
+
+    <!-- Executive KPI Metric Banner -->
+    <section class="kpi-grid" aria-label="Key Performance Indicators">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Claims Analyzed</div>
+        <div class="kpi-value cyan" id="metricTotalClaims">--</div>
+        <div class="kpi-subtext">837 Claims Ingested</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dollars Recovered</div>
+        <div class="kpi-value emerald" id="metricDollarsRecovered">$0</div>
+        <div class="kpi-subtext">From Remediated Denials</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Auto Overturn Rate</div>
+        <div class="kpi-value cyan" id="metricOverturnRate">0%</div>
+        <div class="kpi-subtext">Jev AI Confidence &ge; 0.85</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Auto-Remediated</div>
+        <div class="kpi-value emerald" id="metricAutoRemediated">--</div>
+        <div class="kpi-subtext">Modifiers -25 / -59 / -XS Appended</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">HITL Review Pending</div>
+        <div class="kpi-value amber" id="metricHitlPending">--</div>
+        <div class="kpi-subtext">LangGraph Interrupts</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Contractual Write-Offs</div>
+        <div class="kpi-value purple" id="metricWriteOffs">--</div>
+        <div class="kpi-subtext">Indicator 0 Compliance Edits</div>
+      </div>
+    </section>
+
+    <!-- State Machine Workflow Pipeline (6-Step Multi-MCP Architecture) -->
+    <section class="pipeline-section">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🔄 Autonomous Multi-MCP Adjudication Protocol (LangGraph 6-Step Pipeline)</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-dim);">
+          TypeSafe Jev AI Multi-Evidence Gate (Safety Threshold: 0.85)
+        </div>
+      </div>
+      <div class="pipeline-stepper">
+        <div class="step-node" id="step-node-1">
+          <div class="step-header">
+            <span class="step-num">Step 1</span>
+            <span class="step-arrow">&rarr;</span>
+          </div>
+          <div class="step-title">ICD-10 MCP</div>
+          <div class="step-desc">HIPAA billability & CARC 16 specificity check</div>
+        </div>
+        <div class="step-node" id="step-node-2">
+          <div class="step-header">
+            <span class="step-num">Step 2</span>
+            <span class="step-arrow">&rarr;</span>
+          </div>
+          <div class="step-title">CMS Coverage MCP</div>
+          <div class="step-desc">Medicare Part B NCD/LCD medical necessity check</div>
+        </div>
+        <div class="step-node" id="step-node-3">
+          <div class="step-header">
+            <span class="step-num">Step 3</span>
+            <span class="step-arrow">&rarr;</span>
+          </div>
+          <div class="step-title">NCCI Inspection</div>
+          <div class="step-desc">Neon Postgres PTP pairing & indicator (0/1/9)</div>
+        </div>
+        <div class="step-node" id="step-node-4">
+          <div class="step-header">
+            <span class="step-num">Step 4</span>
+            <span class="step-arrow">&rarr;</span>
+          </div>
+          <div class="step-title">Local FHIR MCP</div>
+          <div class="step-desc">EHR DocumentReference operative chart extraction</div>
+        </div>
+        <div class="step-node" id="step-node-5">
+          <div class="step-header">
+            <span class="step-num">Step 5</span>
+            <span class="step-arrow">&rarr;</span>
+          </div>
+          <div class="step-title">Jev AI Gate</div>
+          <div class="step-desc">Multi-MCP synthesized Noul & Score primitive</div>
+        </div>
+        <div class="step-node" id="step-node-6">
+          <div class="step-header">
+            <span class="step-num">Step 6</span>
+            <span style="font-size: 0.8rem; color: var(--emerald-success);">✓</span>
+          </div>
+          <div class="step-title">Adjudication Outcome</div>
+          <div class="step-desc">Auto-Append Modifier vs HITL vs Write-Off</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls & Claims Management Table -->
+    <section>
+      <div class="controls-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="claimSearchInput" placeholder="Search by Claim ID, Patient, Payer, or CPT Code..." aria-label="Search claims">
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="ALL">All Claims</button>
+          <button class="filter-btn" data-filter="PENDING">Pending</button>
+          <button class="filter-btn" data-filter="AUTO_REMEDIATED">Auto-Remediated</button>
+          <button class="filter-btn" data-filter="HITL_REVIEW">HITL Review</button>
+          <button class="filter-btn" data-filter="WRITTEN_OFF">Written Off</button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table class="claims-table">
+          <thead>
+            <tr>
+              <th>Claim ID & DOS</th>
+              <th>Patient</th>
+              <th>Payer</th>
+              <th>Procedures (CPT)</th>
+              <th>Service Line Denial (CARC/RARC)</th>
+              <th>Billed Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="claimsTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 32px;">
+                Loading claim records...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Interactive Multi-MCP Sandboxes (Tabs for NCCI, ICD-10, CMS Coverage) -->
+    <section class="sandbox-card">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🔬 Interactive Anthropic MCP Diagnostic Sandbox</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-dim);">
+          Live Diagnostic Verification via icd10-codes, cms-coverage, and Neon DB
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px;">
+        <button class="tab-btn active" id="btnSandboxNcci" onclick="switchSandboxTab('ncci')">1. NCCI PTP Lookup</button>
+        <button class="tab-btn" id="btnSandboxIcd10" onclick="switchSandboxTab('icd10')">2. ICD-10 MCP Validator</button>
+        <button class="tab-btn" id="btnSandboxCms" onclick="switchSandboxTab('cms')">3. CMS Coverage MCP Search</button>
+        <button class="tab-btn" id="btnSandboxDenial" onclick="switchSandboxTab('denial')">4. Denial Matrix (CARC/RARC)</button>
+      </div>
+
+      <!-- Tab A: NCCI Sandbox -->
+      <div id="sandboxTabNcci">
+        <div class="sandbox-form">
+          <div class="input-field-wrap">
+            <label for="cptInput1">Column 1 CPT (Comprehensive):</label>
+            <input type="text" id="cptInput1" placeholder="e.g. 99214, 45385, 29881">
+          </div>
+          <div class="input-field-wrap">
+            <label for="cptInput2">Column 2 CPT (Component):</label>
+            <input type="text" id="cptInput2" placeholder="e.g. 11102, 45380, 29877">
+          </div>
+          <button class="btn-primary" id="sandboxLookupBtn" style="height: 42px;">
+            Lookup NCCI Rule
+          </button>
+        </div>
+        <div class="sandbox-result-box" id="sandboxResultBox"></div>
+      </div>
+
+      <!-- Tab B: ICD-10 Sandbox -->
+      <div id="sandboxTabIcd10" style="display: none;">
+        <div class="sandbox-form" style="grid-template-columns: 1fr auto;">
+          <div class="input-field-wrap">
+            <label for="icd10Input">ICD-10-CM Diagnosis Code (Anthropic icd10-codes MCP):</label>
+            <input type="text" id="icd10Input" placeholder="e.g. C44.319, I10, D12.6, M23.22, L57.0">
+          </div>
+          <button class="btn-primary" onclick="handleIcd10SandboxLookup()" style="height: 42px;">
+            Validate ICD-10
+          </button>
+        </div>
+        <div class="sandbox-result-box" id="icd10ResultBox"></div>
+      </div>
+
+      <!-- Tab C: CMS Coverage Sandbox -->
+      <div id="sandboxTabCms" style="display: none;">
+        <div class="sandbox-form" style="grid-template-columns: 1fr auto;">
+          <div class="input-field-wrap">
+            <label for="cmsCptInput">CPT/HCPCS Procedure Code (Anthropic cms-coverage MCP):</label>
+            <input type="text" id="cmsCptInput" placeholder="e.g. 45385, 11102, 17311, 29881">
+          </div>
+          <button class="btn-primary" onclick="handleCmsSandboxLookup()" style="height: 42px;">
+            Search NCD / LCD Policies
+          </button>
+        </div>
+        <div class="sandbox-result-box" id="cmsResultBox"></div>
+      </div>
+
+      <!-- Tab D: Denial Rule Matrix Sandbox -->
+      <div id="sandboxTabDenial" style="display: none;">
+        <div class="sandbox-form" style="grid-template-columns: 1.4fr 120px 120px auto;">
+          <div class="input-field-wrap">
+            <label for="denialPayerInput">Payer Name / Plan Type:</label>
+            <input type="text" id="denialPayerInput" placeholder="e.g. Medicare, Sedgwick, Aetna, Geico, Fidelis">
+          </div>
+          <div class="input-field-wrap">
+            <label for="denialCarcInput">CARC Code:</label>
+            <input type="text" id="denialCarcInput" placeholder="e.g. 29, 16, 50, 97, 4">
+          </div>
+          <div class="input-field-wrap">
+            <label for="denialRarcInput">RARC Code (Opt):</label>
+            <input type="text" id="denialRarcInput" placeholder="e.g. N211, N225, N252">
+          </div>
+          <button class="btn-primary" onclick="handleDenialSandboxLookup()" style="height: 42px;">
+            Lookup Denial Pathway
+          </button>
+        </div>
+        <div class="sandbox-result-box" id="denialResultBox"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Deep Claim Inspection Modal Drawer (6 Multi-MCP Tabs) -->
+  <div class="modal-overlay" id="claimDetailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <div style="font-size: 0.75rem; color: var(--cyan-primary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">CLAIM MULTI-MCP ADJUDICATION CONSOLE</div>
+          <h2 id="modalClaimId" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.3rem;">CLM-2026-901</h2>
+          <div id="modalPatientHeader" style="font-size: 0.8rem; color: var(--text-dim);">Patient Header</div>
+        </div>
+        <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="tab-btn active" data-tab="claim-data">1. EDI 837/835</button>
+        <button class="tab-btn" data-tab="icd10-mcp">2. ICD-10 MCP</button>
+        <button class="tab-btn" data-tab="cms-mcp">3. CMS Coverage MCP</button>
+        <button class="tab-btn" data-tab="fhir-mcp">4. Local FHIR MCP</button>
+        <button class="tab-btn" data-tab="jev-decision">5. TypeSafe Jev AI</button>
+        <button class="tab-btn" data-tab="appeal-packet">6. Appeal Letter</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Tab 1: EDI 837 / 835 -->
+        <div class="tab-panel active" id="tab-claim-data">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">Patient:</div>
+              <div id="tab1Patient" style="font-weight: 600;">--</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">Payer:</div>
+              <div id="tab1Payer" style="font-weight: 600;">--</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">Date of Service:</div>
+              <div id="tab1Dos" style="font-weight: 600;">--</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">Total Billed:</div>
+              <div id="tab1Billed" style="font-weight: 600; color: var(--cyan-primary);">--</div>
+            </div>
+            <div style="grid-column: span 2;">
+              <div style="font-size: 0.75rem; color: var(--text-dim);">Diagnosis Codes (ICD-10):</div>
+              <div id="tab1Diagnosis" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #cbd5e1;">--</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main);">
+              Service Line Item Adjudication & Denial Reasons (835 SVC / CAS Loops):
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-dim);">
+              Granular Service Line-Level CARC / RARC Breakdown
+            </div>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 16px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-dim); text-align: left;">
+                <th style="padding: 8px 6px;">Line / CPT</th>
+                <th style="padding: 8px 6px;">Service Description</th>
+                <th style="padding: 8px 6px;">Modifiers</th>
+                <th style="padding: 8px 6px;">Billed</th>
+                <th style="padding: 8px 6px;">Allowed / Paid</th>
+                <th style="padding: 8px 6px;">Line Denial Reason (CARC / RARC)</th>
+              </tr>
+            </thead>
+            <tbody id="modalLineItemsBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Tab 2: ICD-10 MCP Validation -->
+        <div class="tab-panel" id="tab-icd10-mcp">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+            Diagnosis Code Specificity & HIPAA Billability (via Anthropic icd10-codes MCP):
+          </div>
+          <div id="tabIcd10Container">Loading ICD-10 validations...</div>
+        </div>
+
+        <!-- Tab 3: CMS Coverage MCP -->
+        <div class="tab-panel" id="tab-cms-mcp">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+            Medicare Part B National & Local Coverage Determinations (via Anthropic cms-coverage MCP):
+          </div>
+          <div id="tabCmsContainer">Loading CMS coverage determinations...</div>
+        </div>
+
+        <!-- Tab 4: Local FHIR MCP -->
+        <div class="tab-panel" id="tab-fhir-mcp">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
+            EHR Operative & Encounter Chart Records (via local-fhir MCP stdio server):
+          </div>
+          <div class="code-box" id="tab2Notes"></div>
+
+          <div class="quote-callout" id="tab2QuoteCallout">
+            <strong>Verbatim Clinical Proving Sentence Extracted by local-fhir MCP:</strong>
+            <div id="tab2Verbatim">--</div>
+          </div>
+        </div>
+
+        <!-- Tab 5: Jev AI Decision -->
+        <div class="tab-panel" id="tab-jev-decision">
+          <div class="jev-grid">
+            <div class="jev-metric-card">
+              <div class="kpi-label">Jev AI Overturn Confidence</div>
+              <div class="kpi-value" id="tab3Confidence">--</div>
+              <div class="kpi-subtext">Safety Threshold &ge; 0.85</div>
+            </div>
+            <div class="jev-metric-card">
+              <div class="kpi-label">Post-Remediation Audit Risk</div>
+              <div class="kpi-value purple" id="tab3Risk">--</div>
+              <div class="kpi-subtext">Clawback / Audit Exposure</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">Denial Category:</div>
+              <div id="tab3Category" style="font-weight: 700; font-size: 0.85rem; color: var(--cyan-primary);">--</div>
+            </div>
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">Remediation Strategy:</div>
+              <div id="tab3Strategy" style="font-weight: 600; font-size: 0.8rem; color: var(--text-main);">--</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">Payer Classification:</div>
+              <div id="tab3PayerCat" style="font-weight: 700; font-size: 0.85rem; color: var(--cyan-primary);">--</div>
+            </div>
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">CARC / RARC Code:</div>
+              <div id="tab3CarcRarc" style="font-weight: 700; font-size: 0.85rem; color: #f59e0b;">--</div>
+            </div>
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">Identified Root Cause:</div>
+              <div id="tab3RootCause" style="font-weight: 600; font-size: 0.8rem; color: var(--text-main);">--</div>
+            </div>
+          </div>
+
+          <div id="tab3PayerGuidanceBox" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.25); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; display: none;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--cyan-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              <span>📜</span> Payer Policy & Regulatory Guidance:
+            </div>
+            <div id="tab3PayerGuidance" style="font-size: 0.82rem; color: var(--text-main); line-height: 1.4;">--</div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">Pipeline Action:</div>
+              <div id="tab3Action" style="font-weight: 700; font-size: 0.85rem; color: var(--cyan-primary);">--</div>
+            </div>
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">NCCI PTP Indicator:</div>
+              <div id="tab3Indicator" style="font-weight: 700; font-size: 0.85rem;">--</div>
+            </div>
+            <div class="jev-metric-card">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">Recommended Modifier:</div>
+              <div id="tab3Modifier" style="font-weight: 700; font-size: 0.85rem; color: var(--emerald-success);">--</div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">Adjudication Rationale:</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;" id="tab3Reasoning"></div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">Multi-MCP Verification Summary:</div>
+          <div style="font-size: 0.85rem; color: var(--cyan-primary); margin-bottom: 16px;" id="tab3McpSummary">--</div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between;">
+            <span>Service Line Denial & Remediation Targets:</span>
+            <span style="font-size: 0.72rem; font-weight: normal; color: var(--text-dim);">Per-Line CARC Reason Codes</span>
+          </div>
+          <div id="tab3LineAdjudicationList" style="margin-bottom: 16px;"></div>
+
+          <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">LangGraph Execution Audit Trail:</div>
+          <div class="code-box" id="tab3AuditTrail"></div>
+        </div>
+
+        <!-- Tab 6: Appeal Letter -->
+        <div class="tab-panel" id="tab-appeal-packet">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+            Automated EDI 837 Appeal & CMS-1500 Resubmission Packet (Gemini LLM):
+          </div>
+          <div class="code-box" id="tab4AppealLetter" style="max-height: 380px;"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div id="modalHitlActions" style="display: none; gap: 8px; margin-right: auto; flex-wrap: wrap;"></div>
+        <button class="btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingestion Modal Drawer -->
+  <div class="modal-overlay" id="uploadModal" style="display: none;">
+    <div class="modal-content" style="max-width: 860px;">
+      <div class="modal-header">
+        <div>
+          <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+            <span>📥</span> EDI 837 Claim & 835 Remittance Ingestion Hub
+          </h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+            ANSI ASC X12 5010 Parser with automatic loop recognition & Lakehouse ingestion
+          </p>
+        </div>
+        <button class="modal-close-btn" id="uploadModalCloseBtn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="gap: 20px; display: flex; flex-direction: column;">
+        <!-- Drag and Drop Dropzone -->
+        <div class="dropzone-box" id="ediDropzone">
+          <input type="file" id="ediFileInput" multiple accept=".edi,.x12,.txt,.837,.835,.json,.csv" style="display: none;">
+          <div class="dropzone-icon">⚡</div>
+          <div style="font-weight: 700; font-size: 1rem; color: var(--text-main); margin-bottom: 6px;">
+            Drag & Drop 837 / 835 / CSV files here, or <span style="color: var(--cyan-primary); text-decoration: underline; cursor: pointer;" id="browseFilesLink">browse files</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+            Supports ANSI ASC X12 5010 (837P / 835), Modern JSON, and Enhanced PM Reports (CSV)
+          </div>
+          <div class="format-tags">
+            <span class="format-pill">837P / 837I Claims</span>
+            <span class="format-pill">835 Remittance</span>
+            <span class="format-pill">Enhanced PM CSV</span>
+            <span class="format-pill">CARC / RARC</span>
+            <span class="format-pill">X12 5010</span>
+          </div>
+        </div>
+
+        <!-- Ingestion Options -->
+        <div class="ingest-options-card">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-main);">
+            <input type="checkbox" id="autoRemediateCheckbox" checked style="accent-color: var(--cyan-primary); width: 16px; height: 16px;">
+            <span><strong>⚡ Auto-trigger JEV AI Multi-MCP Remediation immediately</strong> upon file ingestion</span>
+          </label>
+        </div>
+
+        <!-- Selected Files Queue -->
+        <div id="fileQueueSection" style="display: none;">
+          <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: var(--text-main); display: flex; justify-content: space-between;">
+            <span>Selected Files (<span id="queueCount">0</span>)</span>
+            <button class="btn-sm" id="clearQueueBtn" style="background: transparent; color: var(--rose-danger); border: 1px solid var(--border-subtle); cursor: pointer;">Clear Queue</button>
+          </div>
+          <div id="queueFileList" style="max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+          <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+            <button class="btn-primary" id="startUploadBtn" style="padding: 10px 24px; font-weight: 700;">
+              Upload & Ingest Selected Files
+            </button>
+          </div>
+        </div>
+
+        <!-- Bulk Drop Directory Card -->
+        <div class="bulk-drop-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.9rem; font-weight: 700; color: var(--cyan-primary); display: flex; align-items: center; gap: 6px;">
+                <span>📁 Server Bulk Ingest Dropzone</span>
+                <span class="badge" id="dropzoneBadge" style="background: rgba(6, 182, 212, 0.2); color: var(--cyan-primary); font-size: 0.72rem;">Checking...</span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                Drop large batches of .edi files directly into <code style="color: #cbd5e1; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">data/ingest/</code>. Processed files are automatically moved to archive.
+              </div>
+            </div>
+            <button class="btn-secondary" id="triggerBulkIngestBtn" style="white-space: nowrap;">
+              🚀 Process Bulk Dropzone
+            </button>
+          </div>
+        </div>
+
+        <!-- Ingest Result Log -->
+        <div id="ingestResultLog" style="display: none;" class="code-box"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="uploadModalCloseFooterBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Databricks Lakehouse Modal -->
+  <div class="modal-overlay" id="databricksModal" style="display: none;">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <div>
+          <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+            <span>🧱</span> Databricks Lakehouse & Unity Catalog Hub
+          </h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+            Medallion Architecture (Bronze 837/835 &bull; Silver NCCI &bull; Gold Remediated Outcomes)
+          </p>
+        </div>
+        <button class="modal-close-btn" id="databricksModalCloseBtn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="gap: 18px; display: flex; flex-direction: column;">
+        <!-- Connection Banner -->
+        <div id="databricksStatusBanner" class="bulk-drop-card" style="border-left: 4px solid var(--emerald-success);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);" id="dbxStatusTitle">Connecting to Databricks...</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;" id="dbxStatusSub">Checking Unity Catalog and SQL Warehouse endpoint</div>
+            </div>
+            <span class="badge badge-auto" id="dbxModeBadge">Simulated Mode</span>
+          </div>
+        </div>
+
+        <!-- Medallion Tables -->
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px;">Lakehouse Medallion Pipeline Architecture</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+            <div class="jev-metric-card" style="border-top: 3px solid #b45309;">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">BRONZE TIER (RAW EDI)</div>
+              <div style="font-weight: 700; font-size: 0.85rem; color: #f59e0b; margin: 4px 0;">claims_837_bronze</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Raw X12 837 claims & 835 remittances with full segment payloads.</div>
+            </div>
+            <div class="jev-metric-card" style="border-top: 3px solid #94a3b8;">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">SILVER TIER (COMPLIANCE)</div>
+              <div style="font-weight: 700; font-size: 0.85rem; color: #e2e8f0; margin: 4px 0;">ncci_edits_silver</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Curated CMS NCCI PTP edits, allowed modifiers, and policy rationales.</div>
+            </div>
+            <div class="jev-metric-card" style="border-top: 3px solid #eab308;">
+              <div style="font-size: 0.72rem; color: var(--text-dim);">GOLD TIER (ANALYTICS)</div>
+              <div style="font-weight: 700; font-size: 0.85rem; color: #fbbf24; margin: 4px 0;">remediated_claims_gold</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Adjudicated outcomes, confidence scores, recovered revenue, and audit trails.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Databricks Volumes Explorer -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 0.85rem; font-weight: 700;">Unity Catalog Volumes (<code id="dbxVolumePath" style="color: var(--cyan-primary);">/Volumes/main/claims_rcm/raw_edi/</code>)</div>
+            <button class="btn-sm" id="refreshVolumesBtn" style="background: transparent; color: var(--cyan-primary); border: 1px solid var(--border-subtle); cursor: pointer;">↻ Refresh Volume</button>
+          </div>
+          <div id="dbxVolumesList" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Sync Button & Log -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25); padding: 14px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">Sync Remediated Adjudications to Gold Table</div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">Publishes current overturned claims, applied modifiers, and audit trails to Databricks.</div>
+          </div>
+          <button class="btn-primary" id="triggerDatabricksSyncBtn" style="padding: 9px 20px;">
+            🔄 Sync to Gold Table
+          </button>
+        </div>
+        <div id="dbxSyncLog" style="display: none;" class="code-box"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="databricksModalCloseFooterBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

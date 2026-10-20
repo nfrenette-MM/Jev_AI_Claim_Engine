@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "cms-coverage": {
+      "serverUrl": "https://hcls.mcp.claude.com/cms_coverage/mcp"
+    },
+    "icd10-codes": {
+      "serverUrl": "https://hcls.mcp.claude.com/icd10_codes/mcp"
+    },
+    "local-fhir": {
+      "command": "node",
+      "args": ["./servers/fhir/dist/index.js"],
+      "env": {
+        "FHIR_BASE_URL": "${FHIR_SERVER_URL}",
+        "FHIR_AUTH_TOKEN": "${FHIR_TOKEN}"
+      }
+    },
+    "databricks": {
+      "command": "python",
+      "args": ["-m", "servers.databricks.server"],
+      "env": {
+        "DATABRICKS_HOST": "${DATABRICKS_HOST}",
+        "DATABRICKS_TOKEN": "${DATABRICKS_TOKEN}",
+        "DATABRICKS_HTTP_PATH": "${DATABRICKS_HTTP_PATH}",
+        "DATABRICKS_CATALOG": "${DATABRICKS_CATALOG:-main}",
+        "DATABRICKS_SCHEMA": "${DATABRICKS_SCHEMA:-claims_rcm}"
+      }
+    }
+  }
+}

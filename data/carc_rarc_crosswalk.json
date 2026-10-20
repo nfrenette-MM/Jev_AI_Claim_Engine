@@ -1,0 +1,682 @@
+[
+  {
+    "rule_id": "RULE_TIMELY_FILING_MEDICARE",
+    "carc": "29",
+    "rarc": "N211",
+    "group_code": "CO",
+    "payer_category": "MEDICARE",
+    "plan_type": "PART_B",
+    "category": "TIMELY_FILING",
+    "caqh_scenario": 3,
+    "root_cause": "Medicare Part B 365-day statutory timely filing limit exceeded.",
+    "remediation_strategy": "Clearinghouse EDI 277CA/999 Acceptance Audit & Medicare Redetermination Appeal",
+    "payer_specific_guidance": "Medicare Part B strictly enforces a 1-calendar year (365 day) filing limit from Date of Service. Exceptions: Administrative error by CMS/MAC, retroactive Medicare entitlement, or retroactive cessation of Medicare Advantage.",
+    "required_evidence": "Electronic clearinghouse EDI 277CA acceptance timestamp showing transmission prior to 365 days from DOS.",
+    "confidence_score": 0.88,
+    "audit_risk_score": 0.15,
+    "available_actions": [
+      {
+        "id": "APPEAL_TIMELY_FILING_MEDICARE",
+        "label": "📄 File Level 1 Redetermination (EDI 277 Proof)",
+        "button_class": "btn-remediate",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_level": "REDETERMINATION", "proof_type": "EDI_277CA"}
+      },
+      {
+        "id": "RESUBMIT_CLEARINGHOUSE_LOG",
+        "label": "📤 Resubmit with MAC Certified 999 Acceptance",
+        "button_class": "btn-accent",
+        "action_type": "RESUBMIT_PROOF",
+        "params": {"proof_type": "EDI_999_RECEIPT"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Enforce Medicare Timely Filing Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "TIMELY_FILING_MEDICARE"
+  },
+  {
+    "rule_id": "RULE_TIMELY_FILING_COMMERCIAL",
+    "carc": "29",
+    "rarc": "N211",
+    "group_code": "CO",
+    "payer_category": "COMMERCIAL",
+    "plan_type": "PPO",
+    "category": "TIMELY_FILING",
+    "caqh_scenario": 3,
+    "root_cause": "Commercial payer contractual timely filing limit (typically 90-180 days) exceeded.",
+    "remediation_strategy": "Clearinghouse EDI 277 Gateway Log Audit & Provider Contract Timely Filing Dispute",
+    "payer_specific_guidance": "Commercial payers enforce contract-specific limits (Aetna/UHC: 90 days for non-par, 180 days for par). State Prompt Pay statutes (e.g. TX Insurance Code 1301.102) govern clean claim submission windows.",
+    "required_evidence": "Clearinghouse delivery receipt or primary payer EOB date (if secondary filing).",
+    "confidence_score": 0.87,
+    "audit_risk_score": 0.14,
+    "available_actions": [
+      {
+        "id": "APPEAL_TIMELY_FILING_COMMERCIAL",
+        "label": "📄 Generate Commercial Timely Filing Appeal (EDI 277)",
+        "button_class": "btn-remediate",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "TIMELY_FILING_COMMERCIAL"}
+      },
+      {
+        "id": "PROMPT_PAY_DISPUTE",
+        "label": "⚖️ File State Prompt Pay Statutory Dispute",
+        "button_class": "btn-accent",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "PROMPT_PAY"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Contractual Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "TIMELY_FILING_COMMERCIAL"
+  },
+  {
+    "rule_id": "RULE_TIMELY_FILING_WORKERS_COMP",
+    "carc": "29",
+    "rarc": "N211",
+    "group_code": "CO",
+    "payer_category": "WORKERS_COMP",
+    "plan_type": "WC_STATUTORY",
+    "category": "TIMELY_FILING",
+    "caqh_scenario": 3,
+    "root_cause": "Workers' Compensation statutory medical bill filing deadline exceeded.",
+    "remediation_strategy": "Statutory Form C-4 / Medical Bill Proof of Mailing or EDI Jurisdiction Audit",
+    "payer_specific_guidance": "Workers' Comp filing deadlines vary by state board (e.g. NY WCB: 90 days; CA DWC: 12 months; TX DWC: 95 days). Timely filing tolling applies when initial claim was delayed by carrier dispute.",
+    "required_evidence": "Certified mail return receipt, fax confirmation log, or clearinghouse WCB electronic receipt.",
+    "confidence_score": 0.82,
+    "audit_risk_score": 0.20,
+    "available_actions": [
+      {
+        "id": "APPEAL_WC_TIMELY_FILING",
+        "label": "📑 File State WC Board Dispute with Proof of Transmission",
+        "button_class": "btn-remediate",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "WC_BOARD_DISPUTE"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm WC Statutory Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "TIMELY_FILING_WORKERS_COMP"
+  },
+  {
+    "rule_id": "RULE_DOC_MISSING_OPERATIVE_REPORT",
+    "carc": "16",
+    "rarc": "N225",
+    "group_code": "CO",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "MISSING_DOCUMENTATION",
+    "caqh_scenario": 1,
+    "root_cause": "Payer requires complete operative note, surgical report, or discharge summary to adjudicate procedure.",
+    "remediation_strategy": "Automated EHR Clinical Records Packaging (PWK 837 Loop & FHIR Operative Record)",
+    "payer_specific_guidance": "High-dollar surgical and complex spine/ortho CPTs require the signed operative record before payment is released. Transmit electronic PWK segment or upload to payer provider portal.",
+    "required_evidence": "Signed operative record with surgeon signature and detailed narrative of distinct procedures.",
+    "confidence_score": 0.91,
+    "audit_risk_score": 0.10,
+    "available_actions": [
+      {
+        "id": "ATTACH_OP_REPORT",
+        "label": "📎 Attach Signed Operative Record (PWK) & Resubmit",
+        "button_class": "btn-remediate",
+        "action_type": "ATTACH_DOCUMENTATION",
+        "params": {"doc_type": "OPERATIVE_REPORT"}
+      },
+      {
+        "id": "REQUEST_PROVIDER_SIGNATURE",
+        "label": "✍️ Request Surgeon Sign-off in EHR",
+        "button_class": "btn-warning",
+        "action_type": "REQUEST_INFO",
+        "params": {"info_type": "PROVIDER_SIGNATURE"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "MISSING_DOCUMENTATION_OP_REPORT"
+  },
+  {
+    "rule_id": "RULE_DOC_MISSING_INVOICE_IMPLANT",
+    "carc": "16",
+    "rarc": "N252",
+    "group_code": "CO",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "MISSING_DOCUMENTATION",
+    "caqh_scenario": 1,
+    "root_cause": "Itemized supply invoice, implant log, or NDC pricing sheet required for unlisted or carve-out code.",
+    "remediation_strategy": "Vendor Purchase Invoice & Surgical Implant Log Packaging",
+    "payer_specific_guidance": "Implantable devices, biologics (Q-codes), and unlisted instrumentation require wholesale acquisition cost (WAC) or manufacturer itemized invoice.",
+    "required_evidence": "Itemized manufacturer invoice showing product number, description, and acquisition cost.",
+    "confidence_score": 0.89,
+    "audit_risk_score": 0.11,
+    "available_actions": [
+      {
+        "id": "ATTACH_IMPLANT_INVOICE",
+        "label": "📋 Attach Itemized Vendor Invoice & Implant Log",
+        "button_class": "btn-remediate",
+        "action_type": "ATTACH_DOCUMENTATION",
+        "params": {"doc_type": "IMPLANT_INVOICE"}
+      },
+      {
+        "id": "REQUEST_MATERIALS_INVOICE",
+        "label": "📦 Request Invoice from Materials Management",
+        "button_class": "btn-warning",
+        "action_type": "REQUEST_INFO",
+        "params": {"info_type": "MATERIALS_MANAGEMENT"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "MISSING_DOCUMENTATION_INVOICE"
+  },
+  {
+    "rule_id": "RULE_MED_NECESSITY_MEDICARE_LCD",
+    "carc": "50",
+    "rarc": "M38",
+    "group_code": "CO",
+    "payer_category": "MEDICARE",
+    "plan_type": "PART_B",
+    "category": "MEDICAL_NECESSITY",
+    "caqh_scenario": 3,
+    "root_cause": "Service not deemed medically necessary per CMS Local Coverage Determination (LCD) or National Coverage Determination (NCD).",
+    "remediation_strategy": "Evidence-Based CMS LCD/NCD Medical Necessity Packet & Conservative Therapy Trial",
+    "payer_specific_guidance": "Medicare Part B MAC coverage rules require specific ICD-10 combinations, objective radiographic findings (MRI/CT), and minimum 6-12 weeks documented conservative therapy trial failure.",
+    "required_evidence": "Diagnostic imaging reports (MRI/CT), physical therapy records, injection trial notes, and surgeon clinical evaluation.",
+    "confidence_score": 0.86,
+    "audit_risk_score": 0.16,
+    "available_actions": [
+      {
+        "id": "SUBMIT_MED_NECESSITY_APPEAL",
+        "label": "📜 Generate Medicare Medical Necessity Appeal (LCD Cited)",
+        "button_class": "btn-remediate",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "MEDICARE_LCD_REDETERMINATION"}
+      },
+      {
+        "id": "UPDATE_DIAGNOSIS_LCD",
+        "label": "➕ Add Covered Secondary LCD ICD-10 & Resubmit",
+        "button_class": "btn-accent",
+        "action_type": "UPDATE_DIAGNOSIS",
+        "params": {}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Non-Covered Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "MED_NECESSITY_MEDICARE"
+  },
+  {
+    "rule_id": "RULE_MED_NECESSITY_COMMERCIAL",
+    "carc": "50",
+    "rarc": "M38",
+    "group_code": "CO",
+    "payer_category": "COMMERCIAL",
+    "plan_type": "ALL",
+    "category": "MEDICAL_NECESSITY",
+    "caqh_scenario": 3,
+    "root_cause": "Service denied as experimental, investigational, or not meeting commercial clinical criteria (e.g. Milliman / InterQual).",
+    "remediation_strategy": "Clinical Peer-to-Peer Review & InterQual/MCG Clinical Criteria Appeal",
+    "payer_specific_guidance": "Commercial payers use MCG or InterQual clinical criteria. Attending physician peer-to-peer review with medical director within 14 days of denial is the highest-yield overturn mechanism.",
+    "required_evidence": "Attending surgeon letter of medical necessity, radiographic evidence, clinical history of failed alternatives.",
+    "confidence_score": 0.84,
+    "audit_risk_score": 0.18,
+    "available_actions": [
+      {
+        "id": "SCHEDULE_PEER_TO_PEER",
+        "label": "👨‍⚕️ Schedule Physician Peer-to-Peer Review",
+        "button_class": "btn-remediate",
+        "action_type": "PEER_TO_PEER",
+        "params": {"priority": "URGENT"}
+      },
+      {
+        "id": "SUBMIT_INTERQUAL_APPEAL",
+        "label": "📜 Generate Commercial Appeal (Cite MCG / InterQual Guidelines)",
+        "button_class": "btn-accent",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "COMMERCIAL_POLICY_DISPUTE"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Non-Covered Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "MED_NECESSITY_COMMERCIAL"
+  },
+  {
+    "rule_id": "RULE_PRIOR_AUTH_ABSENT_SURGICAL",
+    "carc": "197",
+    "rarc": "N54",
+    "group_code": "CO",
+    "payer_category": "COMMERCIAL",
+    "plan_type": "ALL",
+    "category": "PRIOR_AUTH_ABSENT",
+    "caqh_scenario": 3,
+    "root_cause": "Precertification / Prior Authorization was not obtained prior to performing the service.",
+    "remediation_strategy": "Retroactive Authorization Request & Emergent/Urgent Intra-Op Care Exemption",
+    "payer_specific_guidance": "Prior authorization denials require evidence that the procedure was performed under emergent or urgent circumstances, or was an unexpected intra-operative extension deemed medically essential.",
+    "required_evidence": "Operative note describing emergency/intra-operative findings and original authorization approval for primary procedure.",
+    "confidence_score": 0.78,
+    "audit_risk_score": 0.28,
+    "available_actions": [
+      {
+        "id": "INITIATE_RETRO_AUTH",
+        "label": "⚡ Initiate Retroactive Prior Auth Request",
+        "button_class": "btn-remediate",
+        "action_type": "RETRO_AUTH",
+        "params": {}
+      },
+      {
+        "id": "APPEAL_EMERGENT_INTRAOP",
+        "label": "🏥 Appeal as Urgent/Intra-Operative Necessity",
+        "button_class": "btn-accent",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "EMERGENT_CARE"}
+      },
+      {
+        "id": "LINK_EXISTING_AUTH",
+        "label": "🔍 Link Existing Authorization # & Resubmit",
+        "button_class": "btn-warning",
+        "action_type": "LINK_AUTH",
+        "params": {}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Un-Authorized Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "PRIOR_AUTH_ABSENT"
+  },
+  {
+    "rule_id": "RULE_PRIOR_AUTH_MEDICAID",
+    "carc": "197",
+    "rarc": "N54",
+    "group_code": "CO",
+    "payer_category": "MEDICAID",
+    "plan_type": "MANAGED_MEDICAID",
+    "category": "PRIOR_AUTH_ABSENT",
+    "caqh_scenario": 3,
+    "root_cause": "Managed Medicaid prior authorization missing or authorization number mismatched.",
+    "remediation_strategy": "State Medicaid Retroactive Prior Auth Grievance & Fair Hearing Request",
+    "payer_specific_guidance": "Medicaid managed care organizations (MCOs) must adhere to state administrative grievance guidelines. In emergency cases, EPSDT or emergency stabilization overrides PA requirements.",
+    "required_evidence": "Emergency department admission notes, triage score, or surgeon emergency certification.",
+    "confidence_score": 0.76,
+    "audit_risk_score": 0.26,
+    "available_actions": [
+      {
+        "id": "MEDICAID_RETRO_AUTH",
+        "label": "⚡ File Medicaid MCO Retroactive Auth with Emergency Cert",
+        "button_class": "btn-remediate",
+        "action_type": "RETRO_AUTH",
+        "params": {"plan": "MEDICAID"}
+      },
+      {
+        "id": "STATE_FAIR_HEARING",
+        "label": "⚖️ Request State Medicaid Agency Fair Hearing",
+        "button_class": "btn-accent",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "FAIR_HEARING"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "PRIOR_AUTH_MEDICAID"
+  },
+  {
+    "rule_id": "RULE_MODIFIER_DISTINCT_SERVICE",
+    "carc": "4",
+    "rarc": "N390",
+    "group_code": "CO",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "MODIFIER_INCONSISTENT",
+    "caqh_scenario": 2,
+    "root_cause": "Procedure code inconsistent with modifier used or required distinct procedural modifier is missing.",
+    "remediation_strategy": "CPT-Modifier Reconciliation & Distinct Procedural Service (-59 / -XS) Alignment",
+    "payer_specific_guidance": "When two surgical procedures are reported on the same day, payers require Modifier -59 or X{EPSU} modifiers to establish distinct anatomical site or separate surgical session.",
+    "required_evidence": "Operative note describing separate incision, separate lesion, or distinct anatomical compartment.",
+    "confidence_score": 0.94,
+    "audit_risk_score": 0.12,
+    "available_actions": [
+      {
+        "id": "APPROVE_MODIFIER_59",
+        "label": "✓ Append Distinct Procedural Modifier (-59)",
+        "button_class": "btn-remediate",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "59"}
+      },
+      {
+        "id": "APPROVE_MODIFIER_XS",
+        "label": "✓ Append Distinct Structure Modifier (-XS)",
+        "button_class": "btn-accent",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "XS"}
+      },
+      {
+        "id": "STRIP_MODIFIER",
+        "label": "🔄 Strip Incompatible Modifier & Resubmit",
+        "button_class": "btn-warning",
+        "action_type": "REMOVE_MODIFIER",
+        "params": {}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "MODIFIER_DISTINCT_SERVICE"
+  },
+  {
+    "rule_id": "RULE_MODIFIER_ANATOMICAL_LATERALITY",
+    "carc": "4",
+    "rarc": "M20",
+    "group_code": "CO",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "MODIFIER_INCONSISTENT",
+    "caqh_scenario": 2,
+    "root_cause": "Missing or inconsistent anatomical modifier indicating laterality (RT, LT, 50).",
+    "remediation_strategy": "Anatomical Laterality Modifier Alignment (RT / LT / 50)",
+    "payer_specific_guidance": "Procedures on paired organs, extremities, or eyes require anatomical modifiers (RT=Right, LT=Left, 50=Bilateral) to comply with payer editing rules.",
+    "required_evidence": "Operative report explicitly identifying the surgical site laterality (Right vs Left).",
+    "confidence_score": 0.95,
+    "audit_risk_score": 0.08,
+    "available_actions": [
+      {
+        "id": "APPROVE_MODIFIER_RT",
+        "label": "✓ Append Right Side Modifier (-RT)",
+        "button_class": "btn-remediate",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "RT"}
+      },
+      {
+        "id": "APPROVE_MODIFIER_LT",
+        "label": "✓ Append Left Side Modifier (-LT)",
+        "button_class": "btn-accent",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "LT"}
+      },
+      {
+        "id": "APPROVE_MODIFIER_50",
+        "label": "✓ Append Bilateral Procedure Modifier (-50)",
+        "button_class": "btn-warning",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "50"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "MODIFIER_LATERALITY"
+  },
+  {
+    "rule_id": "RULE_NCCI_INDICATOR_1_UNBUNDLING",
+    "carc": "97",
+    "rarc": "N390",
+    "group_code": "CO",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "NCCI_BUNDLING",
+    "caqh_scenario": 2,
+    "root_cause": "Benefit included in payment/allowance for another service per NCCI PTP edit (Indicator 1).",
+    "remediation_strategy": "NCCI PTP Indicator 1 Overturn with Clinical Unbundling Substantiation",
+    "payer_specific_guidance": "Under CMS NCCI Policy Manual Chapter 1, Indicator 1 edits are permissible with an appropriate modifier (-25, -59, -XS, -XE) when clinical documentation proves distinct encounter or separate anatomical site.",
+    "required_evidence": "Operative record verbatim proof of separate anatomical compartment or separate encounter.",
+    "confidence_score": 0.94,
+    "audit_risk_score": 0.14,
+    "available_actions": [
+      {
+        "id": "OVERTURN_MOD_25",
+        "label": "✓ Specialist Overturn (-25 Separate E/M)",
+        "button_class": "btn-remediate",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "25"}
+      },
+      {
+        "id": "OVERTURN_MOD_59",
+        "label": "✓ Specialist Overturn (-59 Distinct Service)",
+        "button_class": "btn-accent",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "59"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm NCCI Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "NCCI_BUNDLING_INDICATOR_1"
+  },
+  {
+    "rule_id": "RULE_NCCI_INDICATOR_0_WRITE_OFF",
+    "carc": "97",
+    "rarc": "N390",
+    "group_code": "CO",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "NCCI_BUNDLING",
+    "caqh_scenario": 2,
+    "root_cause": "Non-overridable NCCI PTP bundling edit (Indicator 0). Mutual exclusivity bars unbundling under all circumstances.",
+    "remediation_strategy": "Enforce Indicator 0 Contractual Compliance Write-Off",
+    "payer_specific_guidance": "CMS guidelines state that Indicator 0 edits cannot be bypassed with any modifier. Submitting modifiers to bypass Indicator 0 is an OIG compliance violation. Balance must be written off contractually.",
+    "required_evidence": "None (Compliance barred).",
+    "confidence_score": 0.0,
+    "audit_risk_score": 1.0,
+    "available_actions": [
+      {
+        "id": "ENFORCE_WRITE_OFF",
+        "label": "✕ Enforce Indicator 0 Contractual Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "NCCI_INDICATOR_0_WRITE_OFF"
+  },
+  {
+    "rule_id": "RULE_COB_OTHER_PAYER_PRIMARY",
+    "carc": "22",
+    "rarc": "N115",
+    "group_code": "CO",
+    "payer_category": "COMMERCIAL",
+    "plan_type": "ALL",
+    "category": "COORDINATION_OF_BENEFITS",
+    "caqh_scenario": 4,
+    "root_cause": "Payer coordination of benefits indicates another payer is primary per Birthday Rule or Medicare Secondary Payer (MSP) rules.",
+    "remediation_strategy": "Real-Time Eligibility (RTE 270/271) Verification & Primary Payer Reroute with EOB",
+    "payer_specific_guidance": "Coordination of Benefits (COB) denial. Run real-time 270/271 inquiry to verify active primary coverage. If primary has adjudicated, attach primary 835/EOB and submit secondary 837.",
+    "required_evidence": "Primary Explanation of Benefits (EOB) or active eligibility verification printout.",
+    "confidence_score": 0.92,
+    "audit_risk_score": 0.08,
+    "available_actions": [
+      {
+        "id": "REROUTE_PRIMARY_PAYER",
+        "label": "🔁 Reroute to Primary Payer with Primary EOB",
+        "button_class": "btn-remediate",
+        "action_type": "COB_REROUTE",
+        "params": {}
+      },
+      {
+        "id": "VERIFY_ELIGIBILITY_270",
+        "label": "🔍 Run Real-Time Eligibility (270/271) Re-check",
+        "button_class": "btn-accent",
+        "action_type": "VERIFY_ELIGIBILITY",
+        "params": {}
+      },
+      {
+        "id": "BILL_PATIENT_COPAY",
+        "label": "👤 Transfer Balance to Patient Responsibility",
+        "button_class": "btn-warning",
+        "action_type": "PATIENT_TRANSFER",
+        "params": {}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm Ineligible Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "COB_PRIMARY_REROUTE"
+  },
+  {
+    "rule_id": "RULE_DUPLICATE_CLAIM_CHECK",
+    "carc": "18",
+    "rarc": "N522",
+    "group_code": "OA",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "DUPLICATE_CLAIM",
+    "caqh_scenario": 2,
+    "root_cause": "Exact duplicate claim / service previously received and adjudicated.",
+    "remediation_strategy": "Remittance Cross-Reference & Repeat Procedure Modifier (-76 / -77) Appeal",
+    "payer_specific_guidance": "If service is a legitimate repeat procedure on the same day by the same physician, append Modifier -76. If by another physician, append Modifier -77. Otherwise, match against original paid voucher and close.",
+    "required_evidence": "Original paid check/EFT transaction ID or clinical documentation proving two separate surgical encounters.",
+    "confidence_score": 0.81,
+    "audit_risk_score": 0.20,
+    "available_actions": [
+      {
+        "id": "MATCH_AND_RECONCILE_PAID",
+        "label": "🔎 Match with Paid Original Claim & Reconcile",
+        "button_class": "btn-remediate",
+        "action_type": "RECONCILE_DUPLICATE",
+        "params": {}
+      },
+      {
+        "id": "APPEAL_REPEAT_MOD_76",
+        "label": "📑 Submit Appeal with Modifier -76 (Repeat Procedure by Same MD)",
+        "button_class": "btn-accent",
+        "action_type": "APPROVE_MODIFIER",
+        "params": {"modifier": "76"}
+      },
+      {
+        "id": "VOID_DUPLICATE",
+        "label": "✕ Void Duplicate Balance",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "DUPLICATE_CLAIM_APPEAL"
+  },
+  {
+    "rule_id": "RULE_FEE_SCHEDULE_ALLOWABLE",
+    "carc": "45",
+    "rarc": "MA130",
+    "group_code": "CO",
+    "payer_category": "ALL",
+    "plan_type": "ALL",
+    "category": "FEE_SCHEDULE_ALLOWED",
+    "caqh_scenario": 2,
+    "root_cause": "Charge exceeds fee schedule / maximum allowable or contracted fee arrangement.",
+    "remediation_strategy": "Contracted Fee Schedule Audit & Approved Contractual Adjustment",
+    "payer_specific_guidance": "CARC 45 is a contractual write-off mandated by participating provider agreements. Audit the allowable against contracted fee schedules. If underpaid relative to contracted rate, file underpayment appeal.",
+    "required_evidence": "Provider contract fee schedule exhibit or Medicare RBRVS conversion factor.",
+    "confidence_score": 0.85,
+    "audit_risk_score": 0.05,
+    "available_actions": [
+      {
+        "id": "POST_CONTRACTUAL_ADJUSTMENT",
+        "label": "✓ Post Approved Contractual Adjustment",
+        "button_class": "btn-remediate",
+        "action_type": "POST_ADJUSTMENT",
+        "params": {}
+      },
+      {
+        "id": "DISPUTE_UNDERPAYMENT",
+        "label": "💰 File Underpayment Dispute vs Contracted Fee Schedule",
+        "button_class": "btn-accent",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "UNDERPAYMENT"}
+      }
+    ],
+    "appeal_template_key": "FEE_SCHEDULE_POSTING"
+  },
+  {
+    "rule_id": "RULE_AUTO_PIP_EMC_DISPUTE",
+    "carc": "96",
+    "rarc": "N119",
+    "group_code": "PR",
+    "payer_category": "AUTO_PIP",
+    "plan_type": "PIP_MVA",
+    "category": "PIP_EMC_DISPUTE",
+    "caqh_scenario": 3,
+    "root_cause": "Personal Injury Protection (PIP) benefit limited due to absence of Emergency Medical Condition (EMC) certification.",
+    "remediation_strategy": "Emergency Medical Condition (EMC) Statutory Certification Packaging",
+    "payer_specific_guidance": "Under state PIP statutes (e.g. Florida F.S. 627.736), failure to submit a physician-certified Emergency Medical Condition (EMC) limits benefits from $10,000 to $2,500. Submit licensed physician EMC statement.",
+    "required_evidence": "Attending physician EMC written certification declaring acute symptoms endangering patient health.",
+    "confidence_score": 0.90,
+    "audit_risk_score": 0.12,
+    "available_actions": [
+      {
+        "id": "ATTACH_EMC_CERTIFICATE",
+        "label": "📋 Attach Physician Emergency Medical Condition (EMC) Cert",
+        "button_class": "btn-remediate",
+        "action_type": "ATTACH_DOCUMENTATION",
+        "params": {"doc_type": "EMC_CERTIFICATE"}
+      },
+      {
+        "id": "PIP_DEMAND_LETTER",
+        "label": "⚖️ Issue Formal Statutory Pre-Suit Demand Letter",
+        "button_class": "btn-accent",
+        "action_type": "SUBMIT_APPEAL",
+        "params": {"appeal_type": "PIP_DEMAND_LETTER"}
+      },
+      {
+        "id": "WRITE_OFF",
+        "label": "✕ Confirm PIP Exhaustion Write-Off",
+        "button_class": "btn-writeoff",
+        "action_type": "WRITE_OFF",
+        "params": {}
+      }
+    ],
+    "appeal_template_key": "PIP_EMC_APPEAL"
+  }
+]
