@@ -421,7 +421,7 @@ async function openClaimInspection(claimId) {
                 ${carcBadges}
                 ${rarcBadges}
               </div>
-              <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.3;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3;">
                 ${adj.denial_reason || (data.remittance ? data.remittance.primary_reason : 'Service line denied')}
               </div>
             ` : `
@@ -439,18 +439,18 @@ async function openClaimInspection(claimId) {
       icdContainer.innerHTML = `
         <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
           <thead>
-            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-dim); text-align: left;">
-              <th style="padding: 6px;">Code</th>
-              <th style="padding: 6px;">Description</th>
-              <th style="padding: 6px;">HIPAA Valid</th>
-              <th style="padding: 6px;">Specificity (CARC 16)</th>
+            <tr style="border-bottom: 2px solid var(--border-subtle); color: var(--text-dim); text-align: left; font-size: 0.72rem; text-transform: uppercase;">
+              <th style="padding: 8px 6px;">Code</th>
+              <th style="padding: 8px 6px;">Description</th>
+              <th style="padding: 8px 6px;">HIPAA Valid</th>
+              <th style="padding: 8px 6px;">Specificity (CARC 16)</th>
             </tr>
           </thead>
           <tbody>
             ${icdValidations.map(v => `
-              <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
                 <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--cyan-primary); padding: 8px 6px;">${v.code}</td>
-                <td style="padding: 8px 6px;">${v.long_description}</td>
+                <td style="padding: 8px 6px; color: var(--text-main); font-weight: 500;">${v.long_description}</td>
                 <td style="padding: 8px 6px;"><span class="badge ${v.valid ? 'badge-auto' : 'badge-writeoff'}">${v.valid ? '✓ Billable' : '✕ Invalid'}</span></td>
                 <td style="padding: 8px 6px;"><span class="badge ${v.specificity_valid ? 'badge-auto' : 'badge-hitl'}">${v.specificity_valid ? '✓ Passed' : '⚠ Non-Specific'}</span></td>
               </tr>
@@ -467,7 +467,7 @@ async function openClaimInspection(claimId) {
     const cmsCoverage = (data.mcp_data && data.mcp_data.cms_coverage) ? data.mcp_data.cms_coverage : null;
     if (cmsCoverage && cmsCoverage.policies && cmsCoverage.policies.length > 0) {
       cmsContainer.innerHTML = cmsCoverage.policies.map(p => `
-        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px;">
+        <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <span style="font-weight: 700; color: var(--cyan-primary); font-size: 0.9rem;">${p.document_type} ${p.policy_id}: ${p.title}</span>
             <span class="badge badge-auto">Covered Under Part B</span>
@@ -565,16 +565,16 @@ async function openClaimInspection(claimId) {
           const carcs = (adj.carc_codes && adj.carc_codes.length > 0) ? adj.carc_codes : (data.remittance && data.remittance.primary_carc ? [data.remittance.primary_carc] : []);
           const isDenied = carcs.length > 0 || (adj.paid_amount === 0 && adj.denial_reason);
           return `
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;">
+            <div style="background: #ffffff; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow-sm);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
                 <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--cyan-primary); font-size: 0.85rem;">
                   Service Line ${li.line_number}: CPT ${li.cpt_code} (Billed: ${formatMoney(li.billed_amount)})
                 </span>
                 <div>
-                  ${isDenied ? `<span class="badge" style="background: rgba(244, 63, 94, 0.15); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.3); font-weight: 700;">CARC ${carcs.join(', ')}</span>` : `<span class="badge badge-auto">✓ Paid ${formatMoney(adj.paid_amount !== undefined ? adj.paid_amount : li.billed_amount)}</span>`}
+                  ${isDenied ? `<span class="badge badge-writeoff" style="font-weight: 700;">CARC ${carcs.join(', ')}</span>` : `<span class="badge badge-auto">✓ Paid ${formatMoney(adj.paid_amount !== undefined ? adj.paid_amount : li.billed_amount)}</span>`}
                 </div>
               </div>
-              <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.3;">
+              <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.35;">
                 <strong>Line Denial Rationale:</strong> ${adj.denial_reason || (isDenied ? data.remittance.primary_reason : 'Service line allowed / paid in full without adjustment')}
               </div>
             </div>
@@ -970,8 +970,8 @@ async function handleDenialSandboxLookup() {
       </div>
 
       ${rule.payer_specific_guidance ? `
-        <div style="background: rgba(14, 165, 233, 0.08); border-left: 3px solid var(--cyan-primary); padding: 8px 12px; margin-bottom: 10px; font-size: 0.8rem; color: #cbd5e1; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
-          <strong>Payer Guidance (${dispPayer}):</strong> ${rule.payer_specific_guidance}
+        <div style="background: var(--cyan-light); border-left: 4px solid var(--cyan-primary); padding: 10px 14px; margin-bottom: 12px; font-size: 0.82rem; color: var(--text-muted); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-weight: 500;">
+          <strong style="color: var(--cyan-primary);">Payer Guidance (${dispPayer}):</strong> ${rule.payer_specific_guidance}
         </div>
       ` : ''}
 
