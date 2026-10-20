@@ -898,7 +898,10 @@ async function handleDenialSandboxLookup() {
       return `<button class="btn-sm" style="background: ${bg}; color: white; cursor: default; pointer-events: none; margin-bottom: 4px;">${act.label}</button>`;
     }).join(' ');
 
-    const evidenceHtml = (rule.required_evidence || []).map(ev => `<span class="format-pill" style="font-size: 0.72rem;">${ev}</span>`).join(' ');
+    const evidenceList = Array.isArray(rule.required_evidence)
+      ? rule.required_evidence
+      : (typeof rule.required_evidence === 'string' ? [rule.required_evidence] : []);
+    const evidenceHtml = evidenceList.map(ev => `<span class="format-pill" style="font-size: 0.72rem;">${ev}</span>`).join(' ');
 
     resultBox.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
