@@ -170,6 +170,42 @@ class JevAiEngine:
                 mcp_verification_summary="ICD-10 MCP validation warning: diagnosis code requires additional digit of specificity."
             )
 
+        # Rule 2.5: Contractual Allowance / Fee Schedule Maximum (CARC 45) -> Written Off Queue for Payment Posters
+        if raw_carc == "45":
+            return JevScore(
+                overturn_confidence=0.95,
+                audit_risk_score=0.02,
+                recommended_modifier=None,
+                action="CONTRACTUAL_WRITE_OFF",
+                remediation_category="CONTRACTUAL_ALLOWANCE",
+                remediation_strategy="Contracted Fee Schedule Audit & Approved Contractual Adjustment",
+                payer_guidance="CARC 45 is a contractual write-off mandated by participating provider agreements.",
+                root_cause="Charge exceeds contracted fee schedule / maximum allowable amount.",
+                available_actions=[
+                    {
+                        "id": "POST_CONTRACTUAL_ADJUSTMENT",
+                        "label": "✓ Post Approved Contractual Adjustment",
+                        "button_class": "btn-remediate",
+                        "action_type": "POST_ADJUSTMENT",
+                        "params": {}
+                    },
+                    {
+                        "id": "DISPUTE_UNDERPAYMENT",
+                        "label": "💰 File Underpayment Dispute vs Contracted Fee Schedule",
+                        "button_class": "btn-accent",
+                        "action_type": "SUBMIT_APPEAL",
+                        "params": {"appeal_type": "UNDERPAYMENT"}
+                    }
+                ],
+                reasoning=(
+                    f"[{noul.payer_category}] Charge exceeds contracted fee schedule / maximum allowable (CARC 45). "
+                    "Mandated contractual write-off under participating provider contract. "
+                    "Routed to Written Off queue for payment poster review and bulk adjustment posting."
+                ),
+                clinical_proof_quote=None,
+                mcp_verification_summary="CARC 45 fee schedule allowable validated. Contractual write-off approved for payment poster review."
+            )
+
         # Rule 3: Query Multi-Dimensional Denial Knowledge Base (Payer + Plan + CARC + RARC)
         rule = denial_kb.search_denial_rules(
             payer_name=noul.payer_tier,

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JEV AI Claim Engine | Autonomous Healthcare Claims Remediation</title>
   <meta name="description" content="Autonomous RCM Claims Remediation and NCCI PTP Adjudication Engine powered by TypeSafe Jev AI, Anthropic HCLS MCPs, and Google Gemini.">
-  <link rel="stylesheet" href="/static/css/style.css?v=2.1.2">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.1.3">
 </head>
 <body>
   <div class="container">
@@ -152,11 +152,37 @@
           <button class="filter-btn" data-filter="WRITTEN_OFF">Written Off</button>
         </div>
         <div class="demo-actions-group">
+          <button class="btn-secondary" id="routeCarc45Btn" title="Route all CARC 45 Fee Schedule Contractual Allowances to Written Off work queue for payment posting" style="font-size: 0.82rem; padding: 8px 14px; border-color: rgba(5, 150, 105, 0.4); color: var(--emerald-success);">
+            ⚖️ Route CARC 45 to Written Off
+          </button>
           <button class="btn-demo-reload" id="reloadDemoBtn" title="Reload clean demo claims in PENDING status for live demonstration">
             🔄 Reload Demo Claims
           </button>
           <button class="btn-demo-clear" id="clearQueueBtn" title="Clear all claims from the queue for demonstration">
             🗑️ Clear Queue
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment Poster Contractual Adjustment Bar -->
+      <div id="contractualPosterBanner" class="poster-banner" style="display: none;">
+        <div class="poster-banner-info">
+          <div class="poster-banner-badge">⚖️ Payment Poster Work Queue</div>
+          <div>
+            <div class="poster-banner-title">
+              CARC 45 Fee Schedule Contractual Allowances (<span id="posterCarc45Count">104</span> Claims • <span id="posterCarc45Dollars">$16,320,356.79</span>)
+            </div>
+            <div class="poster-banner-desc">
+              Mandated participating provider fee schedule adjustments. Review and post contractual adjustments off in bulk or export the posting batch CSV.
+            </div>
+          </div>
+        </div>
+        <div class="poster-banner-actions">
+          <a href="/api/claims/export-carc45-csv" class="btn-secondary" id="exportCarc45CsvBtn" style="font-size: 0.8rem; padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" download>
+            📥 Export Posting Batch (CSV)
+          </a>
+          <button class="btn-primary" id="bulkPostContractualBtn" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); border-color: #10b981; font-size: 0.8rem; padding: 8px 16px;">
+            ✓ Bulk Post Contractual Adjustments
           </button>
         </div>
       </div>
@@ -689,6 +715,6 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="/static/js/app.js?v=2.1.2"></script>
+  <script src="/static/js/app.js?v=2.1.3"></script>
 </body>
 </html>

@@ -77,6 +77,16 @@ function setupEventListeners() {
     reloadBtn.addEventListener('click', handleReloadDemo);
   }
 
+  // CARC 45 Payment Poster Actions
+  const routeCarc45Btn = document.getElementById('routeCarc45Btn');
+  if (routeCarc45Btn) {
+    routeCarc45Btn.addEventListener('click', handleRouteCarc45);
+  }
+  const bulkPostBtn = document.getElementById('bulkPostContractualBtn');
+  if (bulkPostBtn) {
+    bulkPostBtn.addEventListener('click', handleBulkPostContractual);
+  }
+
   // NCCI Sandbox Form
   const sandboxBtn = document.getElementById('sandboxLookupBtn');
   if (sandboxBtn) {
@@ -197,7 +207,34 @@ function filterClaims(searchTerm, filterStatus) {
   });
 }
 
+function updatePosterBanner() {
+  const banner = document.getElementById('contractualPosterBanner');
+  if (!banner) return;
+
+  const carc45Claims = allClaims.filter(item => {
+    const r = item.remittance;
+    const c = item.claim;
+    const isCarc45 = (r && r.primary_carc === '45') || (c && c.status === 'WRITTEN_OFF');
+    return isCarc45;
+  });
+
+  const count = carc45Claims.length;
+  const dollars = carc45Claims.reduce((acc, cur) => acc + (cur.claim.total_billed || 0), 0);
+
+  const countEl = document.getElementById('posterCarc45Count');
+  const dollarsEl = document.getElementById('posterCarc45Dollars');
+  if (countEl) countEl.innerText = count;
+  if (dollarsEl) dollarsEl.innerText = formatMoney(dollars);
+
+  if (count > 0 && (currentFilter === 'WRITTEN_OFF' || currentFilter === 'ALL')) {
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 function renderClaims(claimsList) {
+  updatePosterBanner();
   const tbody = document.getElementById('claimsTableBody');
   if (!tbody) return;
 
@@ -478,6 +515,78 @@ async function handleReloadDemo() {
     if (reloadBtn) {
       reloadBtn.disabled = false;
       reloadBtn.innerHTML = '🔄 Reload Demo Claims';
+    }
+  }
+}
+
+async function handleRouteCarc45() {
+  const btn = document.getElementById('routeCarc45Btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Routing CARC 45...';
+  }
+
+  showToast('Routing all CARC 45 fee schedule allowances to Written Off work queue...', 'info');
+
+  try {
+    const res = await fetch('/api/claims/move-carc45-writeoff', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`Moved ${data.count} CARC 45 claims (${formatMoney(data.total_dollars)}) to Written Off work queue.`, 'success');
+      await fetchMetrics();
+      await fetchClaims();
+      // Activate Written Off filter tab so user immediately sees them
+      const writeoffBtn = document.querySelector('.filter-btn[data-filter="WRITTEN_OFF"]');
+      if (writeoffBtn) writeoffBtn.click();
+    } else {
+      showToast(data.detail || 'Failed to route CARC 45 claims.', 'error');
+    }
+  } catch (err) {
+    console.error('Route CARC 45 error:', err);
+    showToast('Failed to route CARC 45 claims due to network error.', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '⚖️ Route CARC 45 to Written Off';
+    }
+  }
+}
+
+async function handleBulkPostContractual() {
+  const countEl = document.getElementById('posterCarc45Count');
+  const dollarsEl = document.getElementById('posterCarc45Dollars');
+  const count = countEl ? countEl.innerText : '104';
+  const dollars = dollarsEl ? dollarsEl.innerText : '$16,320,356.79';
+
+  const confirmed = confirm(
+    `Confirm bulk posting contractual fee schedule adjustments for ${count} claims (${dollars})?\n\n` +
+    "This will confirm payment poster verification, clear the contractual balances from the ledger, and record the audit timestamp."
+  );
+  if (!confirmed) return;
+
+  const btn = document.getElementById('bulkPostContractualBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Posting Adjustments...';
+  }
+
+  try {
+    const res = await fetch('/api/claims/bulk-post-contractual', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`✓ Contractual adjustments posted for ${data.count} claims (${formatMoney(data.total_dollars)}). Ledger updated.`, 'success');
+      await fetchMetrics();
+      await fetchClaims();
+    } else {
+      showToast(data.detail || 'Failed to post contractual adjustments.', 'error');
+    }
+  } catch (err) {
+    console.error('Bulk post contractual error:', err);
+    showToast('Failed to post adjustments due to network error.', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '✓ Bulk Post Contractual Adjustments';
     }
   }
 }

@@ -93,6 +93,77 @@ async def reload_demo_claims():
         "metrics": db.get_metrics()
     }
 
+@app.post("/api/claims/move-carc45-writeoff")
+async def move_carc45_to_written_off():
+    """
+    Moves all CARC 45 (Contractual Allowance / Fee Schedule) claims to WRITTEN_OFF
+    work queue so payment posters can review and bulk adjust them off.
+    """
+    res = db.move_carc45_to_written_off()
+    return {
+        "status": "success",
+        "message": f"Successfully moved {res['count']} CARC 45 claims (${res['total_dollars']:,.2f}) to Written Off work queue.",
+        "count": res["count"],
+        "total_dollars": res["total_dollars"],
+        "metrics": db.get_metrics()
+    }
+
+@app.post("/api/claims/bulk-post-contractual")
+async def bulk_post_contractual():
+    """
+    Executes bulk contractual adjustment posting for all CARC 45 claims in WRITTEN_OFF.
+    Records payment poster audit timestamp and confirmation.
+    """
+    res = db.bulk_post_contractual_adjustments()
+    return {
+        "status": "success",
+        "message": f"Successfully posted contractual adjustments for {res['count']} claims (${res['total_dollars']:,.2f}).",
+        "count": res["count"],
+        "total_dollars": res["total_dollars"],
+        "metrics": db.get_metrics()
+    }
+
+@app.get("/api/claims/export-carc45-csv")
+async def export_carc45_csv():
+    """
+    Exports all CARC 45 contractual allowance claims as a clean CSV batch for PM posting.
+    """
+    import io
+    import csv
+    from fastapi.responses import Response
+
+    records = db.get_carc45_claims_for_export()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Claim ID", "Date of Service", "Patient Name", "Patient ID",
+        "Payer Name", "Payer ID", "CPT Codes", "Total Billed", "Contractual Adjustment",
+        "Status", "Primary CARC", "Denial Reason", "Poster Action"
+    ])
+    for r in records:
+        writer.writerow([
+            r["claim_id"],
+            r["date_of_service"],
+            r["patient_name"],
+            r["patient_id"],
+            r["payer_name"],
+            r["payer_id"],
+            r["cpt_codes"],
+            f"{r['total_billed']:.2f}",
+            f"{r['total_billed']:.2f}",
+            r["status"],
+            r["primary_carc"],
+            r["primary_reason"],
+            "APPROVED_CONTRACTUAL_WRITE_OFF"
+        ])
+
+    csv_data = output.getvalue()
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=CARC45_Contractual_Adjustments_Batch.csv"}
+    )
+
 @app.get("/api/claims/{claim_id}")
 async def get_claim_detail(claim_id: str):
     claim = db.get_claim(claim_id)

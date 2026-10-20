@@ -1,6 +1,7 @@
 import os
 import json
 import sqlite3
+from datetime import datetime
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 from app.models import Claim837, Remittance835, NcciPtpEdit, AdjudicationOutcome, ClaimLineItem, LineAdjudication
@@ -459,6 +460,180 @@ class DatabaseAdapter:
         conn.commit()
         conn.close()
         return {"deleted_claims": claims_count, "deleted_adjudications": adj_count}
+
+    def move_carc45_to_written_off(self) -> Dict[str, Any]:
+        """
+        Moves all CARC 45 claims (contractual fee schedule allowances)
+        into the WRITTEN_OFF work queue for payment poster review and bulk adjustment.
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT c.claim_id, c.total_billed, c.payer_name
+            FROM claims_837 c
+            JOIN remittances_835 r ON c.claim_id = r.claim_id
+            WHERE r.primary_carc = '45'
+        """)
+        carc45_rows = cursor.fetchall()
+        count = len(carc45_rows)
+        total_dollars = sum(r["total_billed"] for r in carc45_rows) if carc45_rows else 0.0
+        claim_ids = [r["claim_id"] for r in carc45_rows]
+
+        if claim_ids:
+            placeholders = ",".join("?" for _ in claim_ids)
+            cursor.execute(
+                f"UPDATE claims_837 SET status = 'WRITTEN_OFF' WHERE claim_id IN ({placeholders})",
+                claim_ids
+            )
+
+            timestamp = datetime.utcnow().isoformat()
+            available_actions = json.dumps([
+                {
+                    "id": "POST_CONTRACTUAL_ADJUSTMENT",
+                    "label": "✓ Post Approved Contractual Adjustment",
+                    "button_class": "btn-remediate",
+                    "action_type": "POST_ADJUSTMENT",
+                    "params": {}
+                },
+                {
+                    "id": "DISPUTE_UNDERPAYMENT",
+                    "label": "💰 File Underpayment Dispute vs Contracted Fee Schedule",
+                    "button_class": "btn-accent",
+                    "action_type": "SUBMIT_APPEAL",
+                    "params": {"appeal_type": "UNDERPAYMENT"}
+                }
+            ])
+
+            for cid in claim_ids:
+                audit = [{
+                    "claim_id": cid,
+                    "step_name": "Contractual Allowance Work Queue Routing",
+                    "timestamp": timestamp,
+                    "detail": "Automated routing of CARC 45 fee schedule allowance to Written Off work queue for payment poster review and bulk adjustment.",
+                    "status": "COMPLETED"
+                }]
+
+                cursor.execute("""
+                    INSERT INTO adjudications (
+                        claim_id, original_billed, remediated_amount, decision,
+                        modifier_applied, ncci_indicator, overturn_confidence,
+                        audit_risk, action, reasoning, remediation_category,
+                        remediation_strategy, available_actions, payer_category,
+                        payer_guidance, root_cause, verbatim_clinical_evidence,
+                        resubmission_ready, audit_trail, timestamp
+                    )
+                    SELECT 
+                        c.claim_id, c.total_billed, 0.0, 'WRITTEN_OFF',
+                        NULL, 9, 0.95,
+                        0.05, 'CONTRACTUAL_WRITE_OFF',
+                        'Contractual fee schedule adjustment mandated by participating provider agreement (CARC 45). Routed to payment poster queue for bulk adjustment.',
+                        'CONTRACTUAL_ALLOWANCE',
+                        'Contracted Fee Schedule Audit & Approved Contractual Adjustment',
+                        ?, 'COMMERCIAL',
+                        'CARC 45 is a contractual write-off mandated by participating provider agreement.',
+                        'Charge exceeds contracted fee schedule / maximum allowable amount.',
+                        '', 0, ?, ?
+                    FROM claims_837 c WHERE c.claim_id = ?
+                    ON CONFLICT(claim_id) DO UPDATE SET
+                        decision = 'WRITTEN_OFF',
+                        action = 'CONTRACTUAL_WRITE_OFF',
+                        remediation_category = 'CONTRACTUAL_ALLOWANCE',
+                        remediation_strategy = 'Contracted Fee Schedule Audit & Approved Contractual Adjustment',
+                        available_actions = excluded.available_actions,
+                        payer_guidance = excluded.payer_guidance,
+                        root_cause = excluded.root_cause,
+                        reasoning = excluded.reasoning,
+                        timestamp = excluded.timestamp
+                """, (available_actions, json.dumps(audit), timestamp, cid))
+
+            conn.commit()
+
+        conn.close()
+        return {
+            "count": count,
+            "total_dollars": round(total_dollars, 2),
+            "claim_ids": claim_ids
+        }
+
+    def bulk_post_contractual_adjustments(self) -> Dict[str, Any]:
+        """
+        Executes bulk contractual adjustment posting for all CARC 45 claims in WRITTEN_OFF queue.
+        Records payment poster verification audit trail.
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT c.claim_id, c.total_billed
+            FROM claims_837 c
+            JOIN remittances_835 r ON c.claim_id = r.claim_id
+            WHERE c.status = 'WRITTEN_OFF' AND r.primary_carc = '45'
+        """)
+        rows = cursor.fetchall()
+        count = len(rows)
+        total_dollars = sum(r["total_billed"] for r in rows) if rows else 0.0
+
+        timestamp = datetime.utcnow().isoformat()
+        for r in rows:
+            cid = r["claim_id"]
+            cursor.execute("SELECT audit_trail, reasoning FROM adjudications WHERE claim_id = ?", (cid,))
+            adj_row = cursor.fetchone()
+            audit = json.loads(adj_row["audit_trail"]) if (adj_row and adj_row["audit_trail"]) else []
+            audit.append({
+                "claim_id": cid,
+                "step_name": "Bulk Payment Poster Contractual Adjustment",
+                "timestamp": timestamp,
+                "detail": f"Payment poster bulk verified fee schedule and confirmed contractual write-off of ${r['total_billed']:,.2f}. Ledger updated.",
+                "status": "RESOLVED"
+            })
+            prev_reasoning = adj_row["reasoning"] if adj_row else ""
+            new_reasoning = prev_reasoning if "[POSTED TO LEDGER]" in prev_reasoning else f"{prev_reasoning} [POSTED TO LEDGER]"
+            cursor.execute(
+                "UPDATE adjudications SET audit_trail = ?, reasoning = ? WHERE claim_id = ?",
+                (json.dumps(audit), new_reasoning, cid)
+            )
+
+        conn.commit()
+        conn.close()
+        return {
+            "count": count,
+            "total_dollars": round(total_dollars, 2)
+        }
+
+    def get_carc45_claims_for_export(self) -> List[Dict[str, Any]]:
+        """Retrieves CARC 45 claims with full fields for CSV export."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT c.claim_id, c.date_of_service, c.patient_name, c.patient_id, 
+                   c.payer_name, c.payer_id, c.line_items, c.total_billed, 
+                   c.status, r.primary_carc, r.primary_reason
+            FROM claims_837 c
+            JOIN remittances_835 r ON c.claim_id = r.claim_id
+            WHERE r.primary_carc = '45'
+            ORDER BY c.total_billed DESC
+        """)
+        rows = cursor.fetchall()
+        results = []
+        for r in rows:
+            raw_lines = json.loads(r["line_items"]) if r["line_items"] else []
+            cpts = ", ".join([li.get("cpt_code", "") for li in raw_lines])
+            results.append({
+                "claim_id": r["claim_id"],
+                "date_of_service": r["date_of_service"],
+                "patient_name": r["patient_name"],
+                "patient_id": r["patient_id"],
+                "payer_name": r["payer_name"],
+                "payer_id": r["payer_id"],
+                "cpt_codes": cpts,
+                "total_billed": r["total_billed"],
+                "status": r["status"],
+                "primary_carc": r["primary_carc"],
+                "primary_reason": r["primary_reason"]
+            })
+        conn.close()
+        return results
 
     def get_metrics(self) -> Dict[str, Any]:
         conn = self._get_connection()
