@@ -446,7 +446,9 @@ header.app-header {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 540px;
   backdrop-filter: blur(16px);
   margin-bottom: 32px;
 }
@@ -458,8 +460,11 @@ table.claims-table {
 }
 
 table.claims-table th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   padding: 14px 18px;
-  background: rgba(10, 16, 28, 0.8);
+  background: rgba(10, 16, 28, 0.95);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
