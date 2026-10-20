@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JEV AI Claim Engine | Autonomous Healthcare Claims Remediation</title>
   <meta name="description" content="Autonomous RCM Claims Remediation and NCCI PTP Adjudication Engine powered by TypeSafe Jev AI, Anthropic HCLS MCPs, and Google Gemini.">
-  <link rel="stylesheet" href="/static/css/style.css?v=2.0.2">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.0.3">
 </head>
 <body>
   <div class="container">
@@ -428,6 +428,23 @@
           <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">Adjudication Rationale:</div>
           <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;" id="tab3Reasoning"></div>
 
+          <!-- Jev AI Denial Decision Matrix Crosswalk Card -->
+          <div id="tab3MatrixCrosswalkCard" style="background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.25); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--cyan-primary); display: flex; align-items: center; gap: 6px;">
+                <span>🧠</span> JEV AI CARC/RARC DENIAL MATRIX ENGINE
+              </div>
+              <span class="badge badge-auto" id="tab3MatrixPayerBadge" style="font-size: 0.7rem;">Active Crosswalk</span>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-main); margin-bottom: 6px;">
+              <strong>Active Policy Rule:</strong> <span id="tab3MatrixRuleText" style="color: #cbd5e1;"></span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px;">
+              <strong>Dynamic Action Pathways Generated:</strong>
+            </div>
+            <div id="tab3MatrixActionsPreview" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+          </div>
+
           <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">Multi-MCP Verification Summary:</div>
           <div style="font-size: 0.85rem; color: var(--cyan-primary); margin-bottom: 16px;" id="tab3McpSummary">--</div>
 
@@ -450,8 +467,13 @@
         </div>
       </div>
 
-      <div class="modal-footer">
-        <div id="modalHitlActions" style="display: none; gap: 8px; margin-right: auto; flex-wrap: wrap;"></div>
+      <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div id="modalHitlActionLabel" style="font-size: 0.72rem; color: var(--cyan-primary); font-family: 'JetBrains Mono', monospace; font-weight: 700; display: none; align-items: center; gap: 6px;">
+            <span>⚡</span> DYNAMIC ACTIONS (POWERED BY CARC/RARC DENIAL MATRIX):
+          </div>
+          <div id="modalHitlActions" style="display: none; gap: 8px; flex-wrap: wrap;"></div>
+        </div>
         <button class="btn-secondary" onclick="closeModal()">Close</button>
       </div>
     </div>
@@ -622,6 +644,6 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="/static/js/app.js?v=2.0.2"></script>
+  <script src="/static/js/app.js?v=2.0.3"></script>
 </body>
 </html>
